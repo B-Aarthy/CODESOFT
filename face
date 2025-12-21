@@ -1,0 +1,44 @@
+
+
+import cv2
+import os
+import matplotlib.pyplot as plt
+
+image_folder = "images"
+os.makedirs(image_folder, exist_ok=True)
+
+print("Folder status:", os.path.exists(image_folder))
+print("Current files in images folder:", os.listdir(image_folder))
+
+cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+face_cascade = cv2.CascadeClassifier(cascade_path)
+
+if len(os.listdir(image_folder)) == 0:
+    print("\n⚠️ NO IMAGES FOUND!")
+    print("👉 Upload at least ONE face image into the 'images' folder")
+    print("👉 Then RUN THIS CELL AGAIN")
+else:
+    print("\n✅ Images detected. Starting face detection...")
+
+    for img_name in os.listdir(image_folder):
+
+        if not img_name.lower().endswith((".jpg", ".png", ".jpeg")):
+            continue
+
+        img_path = os.path.join(image_folder, img_name)
+        img = cv2.imread(img_path)
+
+        if img is None:
+            continue
+
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+
+        for (x, y, w, h) in faces:
+            cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+
+        plt.figure(figsize=(5,5))
+        plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        plt.title(f"{img_name} | Faces detected: {len(faces)}")
+        plt.axis("off")
+        plt.show()
