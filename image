@@ -1,0 +1,30 @@
+# -------------------------------
+# SAFE IMAGE FEATURE EXTRACTION
+# -------------------------------
+vgg = VGG16()
+vgg = Model(inputs=vgg.inputs, outputs=vgg.layers[-2].output)
+
+features = {}
+
+for img_name in os.listdir(image_folder):
+
+    # ONLY process JPG images
+    if not img_name.lower().endswith(".jpg"):
+        continue
+
+    img_path = os.path.join(image_folder, img_name)
+
+    try:
+        image = load_img(img_path, target_size=(224, 224))
+        image = img_to_array(image)
+        image = image.reshape((1, 224, 224, 3))
+        image = preprocess_input(image)
+
+        feature = vgg.predict(image, verbose=0)
+        image_id = img_name.split('.')[0]
+        features[image_id] = feature
+
+    except Exception as e:
+        print("Skipping file:", img_name)
+
+print("Image features extracted safely:", len(features))
