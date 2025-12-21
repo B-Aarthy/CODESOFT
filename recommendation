@@ -1,0 +1,60 @@
+
+import pandas as pd
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+
+data = {
+    'User': ['A','A','A','B','B','C','C','D','D','E','E'],
+    'Movie': ['Titanic','Avatar','Inception',
+              'Titanic','Inception',
+              'Avatar','Titanic',
+              'Avatar','Inception',
+              'Titanic','Avatar'],
+    'Rating': [5,4,5, 4,4, 5,3, 4,5, 3,4]
+}
+
+df = pd.DataFrame(data)
+print("Movie Rating Dataset:")
+print(df)
+
+user_movie_matrix = df.pivot_table(
+    index='User',
+    columns='Movie',
+    values='Rating'
+).fillna(0)
+
+print("\nUser-Movie Matrix:")
+print(user_movie_matrix)
+
+user_similarity = cosine_similarity(user_movie_matrix)
+user_similarity_df = pd.DataFrame(
+    user_similarity,
+    index=user_movie_matrix.index,
+    columns=user_movie_matrix.index
+)
+
+print("\nUser Similarity Matrix:")
+print(user_similarity_df)
+
+def recommend_movies(user, matrix, similarity_df, top_n=3):
+    if user not in matrix.index:
+        return "User not found!"
+
+    # Get similar users (excluding the user itself)
+    similar_users = similarity_df[user].sort_values(ascending=False)[1:]
+
+    recommendations = pd.Series(dtype=float)
+
+    for sim_user, sim_score in similar_users.items():
+        user_ratings = matrix.loc[sim_user]
+        recommendations = recommendations.add(user_ratings * sim_score, fill_value=0)
+
+    # Remove movies already watched by the user
+    watched_movies = matrix.loc[user]
+    recommendations = recommendations[watched_movies == 0]
+
+    return recommendations.sort_values(ascending=False).head(top_n)
+
+user_name = 'A'
+print(f"\nRecommended movies for User {user_name}:")
+print(recommend_movies(user_name, user_movie_matrix, user_similarity_df))
